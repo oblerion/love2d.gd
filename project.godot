@@ -9,7 +9,7 @@
 config_version=4
 
 _global_script_classes=[ {
-"base": "Reference",
+"base": "Node2D",
 "class": "Love2d",
 "language": "GDScript",
 "path": "res://script/Love2d.gd"

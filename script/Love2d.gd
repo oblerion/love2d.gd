@@ -7,7 +7,8 @@ var _key_down=[];
 var _delta;
 var _curant_color=Color.white;
 var _curant_font=null;
-var _graphics_list=[];
+var _graphics_todraw=[]
+var _graphics_draw=[]
 # define in derivate ----------------
 func Load():
 	pass
@@ -15,6 +16,45 @@ func Update(delta):
 	pass
 func Draw():
 	pass
+# ------------------------ internal system
+func _graphics_find(list:Array,e:CanvasItem) -> int:
+	var i=0;
+	for le in list:
+		if le is Label and e is Label:
+			if le.text == e.text and le.get_position() == e.get_position():
+				return i
+		elif le is Sprite and e is Sprite:
+			if le.texture == e.texture and le.position == e.position:
+				return i
+		i+=1
+	return -1
+func _graphics_new(e:CanvasItem) -> void:
+	if _graphics_find(_graphics_todraw,e)==-1:
+		_graphics_todraw.push_back(e)
+func _graphics_clear() -> void:
+	for d in _graphics_draw:
+		if _graphics_find(_graphics_todraw,d)==-1:
+			_graphics_draw.erase(d)
+			remove_child(d)
+	_graphics_todraw.clear()
+func _graphics_push() -> void:
+	for td in _graphics_todraw:
+		if _graphics_find(_graphics_draw,td)==-1:
+			add_child(td)
+			_graphics_draw.push_back(td)
+			
+func _graphics_newLabel(text:String,x:int,y:int,r:float) -> void:
+	var lab = Label.new();
+	lab.text=text;
+	lab.set_position(Vector2(x,y));
+	lab.set_rotation(r)
+	lab.set("custom_colors/font_color", _curant_color)
+	_graphics_new(lab)
+func _graphics_newSprite(ptexture:Texture,x:int,y:int) -> void:
+	var lspr = Sprite.new();
+	lspr.position=Vector2(x,y);
+	lspr.set_texture(ptexture);
+	_graphics_new(lspr)
 # public function  --------------------
 func mouse_isDown(id:int) -> bool:
 	if id<1 and id>3: 
@@ -55,40 +95,23 @@ func graphics_setColor(color:Color) -> void:
 func graphics_getColor() -> Color:
 	return _curant_color
 func graphics_draw(e:Texture,x:int,y:int) -> void:
-	for le in _graphics_list:
-		if le is Texture and le.texture==e:
-			return;
-	var lspr = Sprite.new();
-	lspr.position=Vector2(x,y);
-	lspr.set_texture(e);
-	add_child(lspr);
-	_graphics_list.push_back(lspr);
-
+	_graphics_newSprite(e,x,y)
 func graphics_print(s:String,x:int,y:int,r:float) ->void:
-	var lab = null
-	for le in _graphics_list:
-		if le is Label and le.text==s:
-			lab = le
-			break;
-	if lab==null: 
-		lab = Label.new();
-		add_child(lab);
-		_graphics_list.push_back(lab);
-	lab.text=s;
-	lab.set_position(Vector2(x,y));
-	lab.set_rotation(r)
-	lab.set("custom_colors/font_color", _curant_color)
+	_graphics_newLabel(s,x,y,r)
 func system_openURL(url:String):
 	if OS.shell_open(url):
 		return true
 	return false
+
 # ------------------------ system 
 func _ready():
 	return Load();
 func _process(delta):
+	_graphics_clear()
 	_delta=delta;
 	Update(delta);
 	Draw();
+	_graphics_push()
 func _input(event):
 	if event is InputEventMouseButton:
 		for i in range(1,3):

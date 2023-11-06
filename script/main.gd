@@ -6,5 +6,6 @@ func Load():
 func Update(delta):
 	pass
 func Draw():
-	if keyboard_isDown(KEY_UP)==true:
-		system_openURL("/home/desnot")
+	if keyboard_isDown(KEY_UP):
+		graphics_draw(t,50,50)
+	graphics_print("hello",45,45,0)
