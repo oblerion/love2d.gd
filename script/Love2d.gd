@@ -1,4 +1,4 @@
-# love2d.gd ver b0.1
+# love2d.gd ver b0.2
 class_name Love2d extends Node2D
 var _mouse =[0,0,false,false,false];
 var _touch=[];
@@ -17,6 +17,16 @@ func Update(delta):
 func Draw():
 	pass
 # ------------------------ internal system
+func _graphics_managerId() -> void:
+	var labelid=0
+	var spriteid=0
+	for e in _graphics_draw:
+		if e is Label:
+			e.name = "label"+var2str(labelid)
+			labelid+=1
+		elif e is Sprite:
+			e.name = "sprite"+var2str(spriteid)
+			spriteid+=1
 func _graphics_find(list:Array,e:CanvasItem) -> int:
 	var i=0;
 	for le in list:
@@ -48,14 +58,20 @@ func _graphics_newLabel(text:String,x:int,y:int,r:float) -> void:
 	lab.text=text;
 	lab.set_position(Vector2(x,y));
 	lab.set_rotation(r)
+	if _curant_font!=null:
+		lab.set("custom_fonts/font",_curant_font)
 	lab.set("custom_colors/font_color", _curant_color)
 	_graphics_new(lab)
+func _graphics_newLabelL(label:Label) -> void:
+	_graphics_new(label)
 func _graphics_newSprite(ptexture:Texture,x:int,y:int) -> void:
 	var lspr = Sprite.new();
 	lspr.position=Vector2(x,y);
 	lspr.set_texture(ptexture);
 	_graphics_new(lspr)
+
 # public function  --------------------
+
 func mouse_isDown(id:int) -> bool:
 	if id<1 and id>3: 
 		return false;
@@ -74,12 +90,26 @@ func keyboard_isDown(key:int) -> bool:
 	return false;
 func timer_getDelta() ->float:
 	return _delta;
-
 func window_getWidth() ->float:
 	return get_viewport().size.x
 func window_getHeight() ->float:
 	return get_viewport().size.y
-
+func graphics_newText(font:Font,text:String) -> Label:
+	var lab = Label.new();
+	lab.text=text;
+	lab.set_position(Vector2.ZERO);
+	lab.set_rotation(0)
+	if font!=null:
+		lab.set("custom_fonts/font",font)
+	lab.set("custom_colors/font_color", _curant_color)
+	return lab
+func graphics_newFont(path:String,size:int) -> DynamicFont:
+		var df = DynamicFont.new()
+		df.font_data = load("res://"+path)
+		df.size = size
+		return df
+func graphics_setFont(font:Font) -> void:
+	_curant_font=font
 func graphics_newImage(filepath:String) -> Texture:
 	var spr;
 	var rload = load("res://"+filepath)
@@ -94,20 +124,30 @@ func graphics_setColor(color:Color) -> void:
 	_curant_color=color
 func graphics_getColor() -> Color:
 	return _curant_color
-func graphics_draw(e:Texture,x:int,y:int) -> void:
-	_graphics_newSprite(e,x,y)
+func graphics_setAlpha(pa:int) -> void:
+	_curant_color.a=pa
+func graphics_draw(e:Object,x:int,y:int) -> void:
+	if e is Texture:
+		_graphics_newSprite(e,x,y)
+	elif e is Label:
+		e.set_position(Vector2(x,y))
+		_graphics_newLabelL(e)
 func graphics_print(s:String,x:int,y:int,r:float) ->void:
 	_graphics_newLabel(s,x,y,r)
 func system_openURL(url:String):
 	if OS.shell_open(url):
 		return true
 	return false
-
+func math_random(pmin:int,pmax:int=0) -> int:
+	if pmax==0:
+		return randi()%pmin
+	return randi()%pmax+pmin
 # ------------------------ system 
 func _ready():
 	return Load();
 func _process(delta):
 	_graphics_clear()
+	_graphics_managerId()
 	_delta=delta;
 	Update(delta);
 	Draw();
